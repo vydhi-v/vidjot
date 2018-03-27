@@ -11,5 +11,9 @@
   "dependencies": {
     "express": "^4.16.3",
     "npm": "^5.8.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vydhi-v/vidjot.git"
+  }  
 }
