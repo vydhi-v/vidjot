@@ -2,38 +2,48 @@
 const express = require('express');
 const exphbs = require('express-handlebars');
 const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
 //import express from express;
 //import exphbs from express-handlebars;
 
 const app = express();
 //Map global promise - get rid of warning
 mongoose.Promise = global.Promise;
+
 //Connect to Mongoose
-mongoose.connect('mongodb://localhost/vidjot-dev'
     //,{
-    //useMongoClient: true
+    //  useMongoClient: true
     //}
     //No longer necessary with latest Mongoose version
-)
-    .then(() => console.log('MongoDB Connected...'))
-    .catch(err => console.log(err));
+mongoose.connect('mongodb://localhost/vidjot-dev')
+        .then(() => console.log('MongoDB Connected...'))
+        .catch(err => console.log(err));
+
 //Load idea model
 require('./models/idea');
-const idea = mongoose.model('ideas');
+const Idea = mongoose.model('ideas');
 
 const appPort = 5000;
 
+//Middleware general example 
+app.use((req, res, next) => {
+    req.name = 'TestNameParam';
+    next();
+});
+
+
+//Handlebars middleware setup
 app.engine('handlebars',exphbs({
     defaultLayout:'main'
 }));
 
 app.set('view engine','handlebars');
 
-
-app.use((req, res, next) => {
-    req.name = 'TestNameParam';
-    next();
-});
+//Bpodyparser middleware
+app.use(bodyParser.urlencoded({
+    extended: false
+}));
+app.use(bodyParser.json());
 
 app.listen(appPort,()=>{
     console.log(`App started listening on port ${appPort}`);
@@ -60,5 +70,29 @@ app.get('/ideas/add',(req, res) => {
 
 //Save idea
 app.post('/ideas',(req,res) => {
-    res.send('ok');
+    console.log(req.body);
+    let errors = [];
+    if(!req.body.details){
+        errors.push({text:'Please add details'});
+    }
+    if(!req.body.title){
+        errors.push({text:'Please add a title'});
+    }
+    if(errors.length>0){
+        res.render('ideas/add',{
+            errors: errors,
+            title: req.body.title,
+            details: req.body.details
+        });
+    }else{
+        //res.send('valid info!');
+        new Idea({
+                    title: req.body.title,
+                    details: req.body.details
+        })
+        .save()
+        .then(idea => {
+            res.redirect('/ideas');
+        });
+    }
 });
