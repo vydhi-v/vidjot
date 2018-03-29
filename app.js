@@ -3,6 +3,8 @@ const express = require('express');
 const exphbs = require('express-handlebars');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const methodOverride = require('method-override');
+
 //import express from express;
 //import exphbs from express-handlebars;
 
@@ -31,7 +33,6 @@ app.use((req, res, next) => {
     next();
 });
 
-
 //Handlebars middleware setup
 app.engine('handlebars',exphbs({
     defaultLayout:'main'
@@ -44,6 +45,13 @@ app.use(bodyParser.urlencoded({
     extended: false
 }));
 app.use(bodyParser.json());
+
+//method-override middleware
+app.use(methodOverride('_method'),(req, res, next)=>{
+    console.log('method override');
+    next();
+});
+
 
 app.listen(appPort,()=>{
     console.log(`App started listening on port ${appPort}`);
@@ -95,4 +103,43 @@ app.post('/ideas',(req,res) => {
             res.redirect('/ideas');
         });
     }
+});
+
+//Retrieve idea(s)
+app.get('/ideas',(req,res) => {
+    Idea.find({})
+        .sort({date:'desc'})
+        .then(ideas => {
+            res.render('ideas/index', {
+                ideas:ideas
+            });
+        });
+    
+});
+
+//Render edit idea form
+app.get('/ideas/edit/:id', (req,res) => {
+    Idea.findOne({
+        _id: req.params.id
+    })
+        .then(idea => {
+            res.render('ideas/edit',{
+                idea:idea
+            });
+        });
+});
+
+//Edit form process
+app.put('/ideas/:id',(req,res) =>{
+    Idea.findOne({
+        _id: req.params.id
+    })
+    .then(idea => {
+        idea.title = req.body.title;
+        idea.details = req.body.details;
+        idea.save()
+            .then(idea => {
+                res.redirect('/ideas');
+            });
+    });    
 });
