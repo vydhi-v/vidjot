@@ -4,9 +4,8 @@ const exphbs = require('express-handlebars');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const methodOverride = require('method-override');
-
-//import express from express;
-//import exphbs from express-handlebars;
+const flash = require('connect-flash');
+const session = require('express-session');
 
 const app = express();
 //Map global promise - get rid of warning
@@ -52,6 +51,23 @@ app.use(methodOverride('_method'),(req, res, next)=>{
     next();
 });
 
+//express-session middleware
+app.use(session({
+    secret: 'secret',
+    resave: true,
+    saveUninitialized: true
+}));
+
+//connect-flas middleware
+app.use(flash());
+
+//globals
+app.use(function(req,res,next){
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    res.locals.error = req.flash('error');
+    next();
+});
 
 app.listen(appPort,()=>{
     console.log(`App started listening on port ${appPort}`);
@@ -92,14 +108,14 @@ app.post('/ideas',(req,res) => {
             title: req.body.title,
             details: req.body.details
         });
-    }else{
-        //res.send('valid info!');
+    }else{        
         new Idea({
                     title: req.body.title,
                     details: req.body.details
         })
         .save()
         .then(idea => {
+            req.flash('success_msg','Project Idea saved!');
             res.redirect('/ideas');
         });
     }
@@ -139,7 +155,17 @@ app.put('/ideas/:id',(req,res) =>{
         idea.details = req.body.details;
         idea.save()
             .then(idea => {
+                req.flash('success_msg','Project Idea saved!')
                 res.redirect('/ideas');
             });
     });    
 });
+
+//Delete Idea
+app.delete('/ideas/:id',(req, res) => {
+    Idea.remove({_id:req.params.id})
+        .then(() => {
+            req.flash('success_msg','Project Idea removed!')
+            res.redirect('/ideas');
+        });
+})
