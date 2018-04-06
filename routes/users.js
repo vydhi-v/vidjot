@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const brcypt = require('bcryptjs');
-//const passport = require('passport');
+const passport = require('passport');
 const router = express.Router();
 
 //Load user model
@@ -11,6 +11,25 @@ const User = mongoose.model('users');
 router.get('/login', (req,res) => {
     res.render('users/login');
 });
+
+//Login form submit (authenticate)
+router.post('/login', (req,res,next) => {
+    passport.authenticate('local', {
+        successRedirect:'/ideas',
+        failureRedirect:'/users/login',
+        failureFlash:true
+    })(req,res,next);
+    //res.render('users/login');
+});
+
+//logout route
+router.get('/logout', (req,res) => {
+    req.logout();
+    req.flash('success_msg','You are logged out');
+    res.redirect('/users/login');
+});
+
+
 
 //register route GET
 router.get('/register', (req,res) => {
@@ -56,7 +75,6 @@ router.post('/register', (req,res) => {
                         brcypt.hash(newUser.password,salt, (err, hash) =>{
                             if(err) throw err;
                             newUser.password = hash;
-                            console.log(newUser);
                             newUser
                                     .save()
                                     .then(user => {
