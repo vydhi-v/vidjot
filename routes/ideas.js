@@ -30,19 +30,20 @@ router.post('/', ensureAuthenticated, (req,res) => {
     }else{        
         new Idea({
                     title: req.body.title,
-                    details: req.body.details
-        })
-        .save()
-        .then(idea => {
-            req.flash('success_msg','Project Idea saved!');
-            res.redirect('/');
-        });
+                    details: req.body.details,
+                    user: req.user.id
+            })
+            .save()
+            .then(idea => {
+                req.flash('success_msg','Project Idea saved!');
+                res.redirect('/');
+            });
     }
 });
 
 //Retrieve idea(s)
 router.get('/', ensureAuthenticated, (req,res) => {
-    Idea.find({})
+    Idea.find({user:req.user.id})
         .sort({date:'desc'})
         .then(ideas => {
             res.render('ideas/index', {
@@ -58,9 +59,14 @@ router.get('/edit/:id', ensureAuthenticated, (req,res) => {
         _id: req.params.id
     })
         .then(idea => {
-            res.render('ideas/edit',{
-                idea:idea
-            });
+            if(idea.user != req.user.id){                
+                req.flash('error_msg','Not your idea to edit!');
+                res.redirect('/ideas');                
+            } else{
+                res.render('ideas/edit',{
+                    idea:idea
+                });
+            }
         });
 });
 
