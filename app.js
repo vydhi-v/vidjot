@@ -25,11 +25,12 @@ mongoose.Promise = global.Promise;
     //  useMongoClient: true
     //}
     //No longer necessary with latest Mongoose version
-mongoose.connect('mongodb://localhost/vidjot-dev')
+const db = require('./config/database');
+mongoose.connect(db.mongoURI)
         .then(() => console.log('MongoDB Connected...'))
         .catch(err => console.log(err));
 
-const appPort = 5000;
+const appPort = process.env.PORT || 5000;
 
 //Middleware general example 
 app.use((req, res, next) => {
